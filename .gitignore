@@ -1,0 +1,31 @@
+.idea
+
+# Logs
+*.log
+*.log.*
+*.err
+*.err.*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Dependency directory
+node_modules
+
+# upload local files
+uploads/*
+!uploads/.gitkeep
+
+# generated apidoc
+docs
+
+# Optional npm cache directory
+.npm
+
+# Mac OS
+.DS_Store
+
+# npm
+package-lock.json
