@@ -1,7 +1,8 @@
 module.exports = {
   server_port: 3000,
   secret: 'fuck.646',
-  ignoreUrl: ['/test'], // 不需要验证的路由
+  ignoreUrl: ['/auth/login'], // 不需要验证的路由
+  salt: 'lo#g?in', // 密码加密盐
   mysql: {
     host: '111.230.151.93',
     port: 3306,

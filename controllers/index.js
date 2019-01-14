@@ -1,4 +1,5 @@
 const controllers = {};
-controllers.test = require('./test');
+controllers.area = require('./area-ctrl');
+controllers.auth = require('./auth-ctrl');
 
 module.exports = controllers;

@@ -2,11 +2,14 @@ const { celebrate, Joi, errors } = require('celebrate');
 const Controllers = require('../controllers');
 
 module.exports = app => {
-  app.get('/test', celebrate({
-    query: {
-      id: Joi.number().required().integer().min(1)
-    }
-  }), Controllers.test.testResponse);
+  // 登录
+  app.post('/auth/login', celebrate({
+    body: Joi.object().keys({
+      mobile: Joi.string().required().length(11),
+      password: Joi.string().required().allow().min(1).max(256)
+    })
+  }), Controllers.auth.login);
+
   // app.route('/article/:_id')
   //   .get(Controllers.article.detail)
   //   .put(Controllers.article.update)

@@ -16,11 +16,10 @@ const jwtVerify = (token, secret) => {
 
 module.exports = async (req, res, next) => {
   if (config.ignoreUrl.indexOf(req.path) === -1) {
-    const headers = req.header || {};
     const query = req.query || {};
-    const jwtToken = headers['x-access-token'] || query.token;
+    const jwtToken = req.get('x-access-token') || query.token;
     try {
-      req.state.user = await jwtVerify(jwtToken, config.secret);
+      req.cookies = await jwtVerify(jwtToken, config.secret);
     } catch (e) {
       // token 验证失败
       res.status(403).send('身份验证失败，可能 token 已过期');
