@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
 require('express-async-errors');
 
 const routes = require('./routes/routes');
@@ -14,6 +15,9 @@ app.use(cors());
 // 请求体解析中间件
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// 静态资源路径配置
+app.use(express.static(path.join(__dirname, 'uploads')))
 
 // token验证
 app.use(auth);

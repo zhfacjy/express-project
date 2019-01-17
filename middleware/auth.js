@@ -15,6 +15,7 @@ const jwtVerify = (token, secret) => {
 };
 
 module.exports = async (req, res, next) => {
+  console.log(req.path);
   if (config.ignoreUrl.indexOf(req.path) === -1) {
     const query = req.query || {};
     const jwtToken = req.get('x-access-token') || query.token;

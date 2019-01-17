@@ -65,6 +65,7 @@ module.exports = {
           if (err2) reject(err2);
           resolve(results);
         });
+        connection.release();
       });
     });
   }
