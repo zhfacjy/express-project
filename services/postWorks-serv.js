@@ -7,8 +7,9 @@ module.exports.findAll = async (skip, take) => {
             left join user u on u.id = w.create_by
             left join att a on a.id = u.avatar
             left join role r on r.id = u.role_id
-              where delete_flag = 0
+              where w.delete_flag = 0
             ORDER BY w.create_at desc limit ?,?;`;
+  const countSql = 'select count(id) as total from post_works where delete_flag = 0;';
   const rl = await db.execSql(sql, [skip, take]);
   const sql2 = `select a.path from att a
                   left join post_and_att b on b.att_id = a.id
@@ -17,14 +18,18 @@ module.exports.findAll = async (skip, take) => {
               left join works_and_tag i on i.tag_id = t.id
               left join post_works p on p.id = i.works_id
                 where p.id = ?;`;
-  const result = await Promise.all(_.map(rl, async x => {
+  const content = await Promise.all(_.map(rl, async x => {
     const paths = await db.execSql(sql2, [x.id]);
     const tags = await db.execSql(sql3, [x.id]);
     x.att_path = paths.map(y => { return y.path; });
     x.tags = tags.map(y => { return y.name; });
     return x;
   }));
-  return result;
+  const total = await db.execSql(countSql);
+  return {
+    content,
+    totalElements: total[0].total
+  };
 };
 
 module.exports.save = async params => {

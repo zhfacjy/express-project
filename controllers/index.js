@@ -5,5 +5,6 @@ controllers.postInfo = require('./postInfo-ctrl');
 controllers.postWorks = require('./postWorks-ctrl');
 controllers.user = require('./user-ctrl');
 controllers.dict = require('./dict-ctrl');
+controllers.my = require('./my-ctrl');
 
 module.exports = controllers;

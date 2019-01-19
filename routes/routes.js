@@ -22,6 +22,7 @@ module.exports = app => {
       name: Joi.string().required().min(1).max(30)
     })
   }), Controllers.dict.save);
+
   // 判断手机号是否已存在
   app.get('/user/has/exist/:mobile', Controllers.user.hasExistMob);
   // 注册
@@ -36,6 +37,34 @@ module.exports = app => {
       role_id: Joi.number().required().integer().min(1)
     })
   }), Controllers.user.register);
+  // 修改个人信息
+  app.post('/user/modify', celebrate({
+    body: {
+      username: Joi.string().required().min(1).max(100),
+      password: Joi.string().required().min(1),
+      mobile: Joi.string().required().length(11),
+      avatar: Joi.string().required().min(1),
+      city_code: Joi.string().required().length(4),
+      sex: Joi.number().required().integer().valid([0, 1]),
+      role_id: Joi.number().required().integer().min(1)
+    }
+  }), Controllers.user.modify);
+  // 关注
+  app.post('/user/follow/:user_id', celebrate({
+    params: {
+      user_id: Joi.number().required().integer().min(1)
+    }
+  }), Controllers.user.follow);
+  // 取消关注
+  app.delete('/user/follow/:user_id', celebrate({
+    params: {
+      user_id: Joi.number().required().integer().min(1)
+    }
+  }), Controllers.user.deFollow);
+  // 个人信息
+  app.get('/user/info/:user_id', celebrate({
+    params: {user_id: Joi.number().required().integer().min(1)}
+  }), Controllers.user.userInfo);
   // 登录
   app.post('/auth/login', celebrate({
     body: Joi.object().keys({
@@ -43,6 +72,7 @@ module.exports = app => {
       password: Joi.string().required().allow().min(1).max(256)
     })
   }), Controllers.auth.login);
+
   // 图片上传
   app.post('/att/upload', Controllers.att.uploadFile);
   // 图片预览
@@ -51,6 +81,7 @@ module.exports = app => {
       path: Joi.string().required().min(1).max(100)
     }
   }), Controllers.att.view);
+
   // 约拍列表
   app.post('/postInfo/search', pageable, celebrate({
     body: Joi.object().keys({
@@ -88,6 +119,16 @@ module.exports = app => {
   app.delete('/postInfo/:info_id', celebrate({
     params: {info_id: Joi.number().required().integer().min(1)}
   }), Controllers.postInfo.delete);
+  // 发起请求
+  app.post('/postInfo/request', celebrate({
+    body: Joi.object().keys({
+      post_id: Joi.number().required().integer().min(1),
+      user_id: Joi.number().required().integer().min(1),
+      content: Joi.string().allow(null).allow('').max(300),
+      contact: Joi.string().allow(null).allow('').max(30)
+    })
+  }), Controllers.postInfo.addRequest);
+
   // 作品列表
   app.get('/postWorks/search', pageable, Controllers.postWorks.findAll);
   // 添加或修改作品
@@ -109,6 +150,35 @@ module.exports = app => {
   app.delete('/postWorks/:works_id', celebrate({
     params: {works_id: Joi.number().required().integer().min(1)}
   }), Controllers.postWorks.delete);
+
+  // 收藏
+  app.post('/my/collect', celebrate({
+    body: {
+      post_id: Joi.number().required().integer().min(1),
+      type: Joi.number().required().integer().valid([1, 2])
+    }
+  }), Controllers.my.addCollect);
+  // 删除收藏
+  app.delete('/my/collect/:post_id/:type', celebrate({
+    params: {
+      post_id: Joi.number().required().integer().min(1),
+      type: Joi.number().required().integer().valid([1, 2])
+    }
+  }), Controllers.my.removeCollect);
+  // 我收藏的
+  app.get('/my/collect/:type', pageable, celebrate({
+    params: {
+      type: Joi.number().required().integer().valid([1, 2])
+    }
+  }), Controllers.my.collectList);
+  // 我的约拍
+  app.get('/my/postInfo/:user_id', pageable, celebrate({
+    params: {user_id: Joi.number().required().integer().min(1)}
+  }), Controllers.my.postInfo);
+  // 我的作品
+  app.get('/my/postWorks/:user_id', pageable, celebrate({
+    params: {user_id: Joi.number().required().integer().min(1)}
+  }), Controllers.my.postWorks);
 
   app.use(errors());
 };

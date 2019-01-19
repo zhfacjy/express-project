@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const db = require('../utils/mysql-util');
 
-module.exports.findAll = async (params, skip, take) => {
+module.exports.findAll = async (params, skip, take, same_city) => {
   let sql = `select i.*,u.username,r.name as user_role,
             a.path as avatar_path,c.name as city_name,u.sex
                 from post_info i
@@ -9,20 +9,33 @@ module.exports.findAll = async (params, skip, take) => {
               left join att a on a.id = u.avatar
               left join role r on r.id = u.role_id
               left join area_code c on c.id = SUBSTR(i.city_code,3,2) and c.parent_id = SUBSTR(i.city_code,1,2)
-                where delete_flag = 0`;
+                where i.delete_flag = 0`;
+  let countSql = `select count(i.id) as total
+                      from post_info i
+                  left join user u on u.id = i.create_by
+                  left join role r on r.id = u.role_id
+                    where i.delete_flag = 0`;
   let query = '';
   const pm = [];
-  if (params.city_code) {
-    query += ' and i.city_code = ?';
-    pm.push(params.city_code);
-  }
-  if (params.sex) {
+  const pm2 = [];
+  if (params.sex !== null) {
     query += ' and u.sex = ?';
     pm.push(params.sex);
+    pm2.push(params.sex);
   }
   if (params.role_id) {
     query += ' and i.role_id = ?';
     pm.push(params.role_id);
+    pm2.push(params.role_id);
+  }
+  if (params.city_code) {
+    query += ' and i.city_code = ?';
+    pm.push(params.city_code);
+    pm2.push(params.city_code);
+  } else if (same_city) {
+    query += ' and i.city_code = (select city_code from user where id = ?) ';
+    pm.push(params.uid);
+    pm2.push(params.uid);
   }
   sql += `${query} order by create_at desc limit ?,?;`;
   pm.push(skip);
@@ -35,22 +48,19 @@ module.exports.findAll = async (params, skip, take) => {
                   left join info_and_tag i on i.tag_id = t.id
                   left join post_info p on p.id = i.info_id
                 where p.id = ?;`;
-  const result = await Promise.all(_.map(rl, async x => {
+  const content = await Promise.all(_.map(rl, async x => {
     const paths = await db.execSql(sql2, [x.id]);
     const tags = await db.execSql(sql3, [x.id]);
     x.att_path = paths.map(y => { return y.path; });
     x.tags = tags.map(y => { return y.name; });
     return x;
   }));
-  return result;
-};
-
-module.exports.sameCity = async (params, skip, take) => {
-  if (params.city_code) {
-    
-  } else {
-
-  }
+  countSql += query;
+  const total = await db.execSql(countSql, pm2);
+  return {
+    content,
+    totalElements: total[0].total
+  };
 };
 
 module.exports.save = async params => {
@@ -100,4 +110,9 @@ module.exports.save = async params => {
 module.exports.delete = async (uid, info_id) => {
   const sql = 'update post_info set delete_flag = 1 where create_by = ? and id = ?;';
   return db.execSql(sql, [uid, info_id]);
+};
+
+module.exports.addRequest = async params => {
+  const sql = 'insert into user_and_request set ?';
+  return db.execSql(sql, params);
 };

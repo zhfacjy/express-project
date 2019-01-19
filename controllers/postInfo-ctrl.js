@@ -2,7 +2,7 @@ const postInfoServ = require('../services/postInfo-serv');
 
 class PostInfoController {
   async findAll(req, res) {
-    const result = await postInfoServ.findAll(req.body, req.query.skip, req.query.take);
+    const result = await postInfoServ.findAll(req.body, req.query.skip, req.query.take, false);
     res.send({
       code: 0,
       data: result
@@ -10,7 +10,8 @@ class PostInfoController {
   }
 
   async sameCity(req, res) {
-    const result = await postInfoServ.sameCity(req.body, req.query.skip, req.query.take);
+    req.body.uid = req.cookies.uid;
+    const result = await postInfoServ.findAll(req.body, req.query.skip, req.query.take, true);
     res.send({
       code: 0,
       data: result
@@ -25,6 +26,11 @@ class PostInfoController {
 
   async delete(req, res) {
     await postInfoServ.delete(req.cookies.uid, req.params.info_id);
+    res.send({code: 0, data: null});
+  }
+
+  async addRequest(req, res) {
+    await postInfoServ.addRequest(req.body);
     res.send({code: 0, data: null});
   }
 }
