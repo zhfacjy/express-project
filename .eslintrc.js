@@ -5,6 +5,7 @@ module.exports = {
     es6: true
   },
   rules: {
+    'no-underscore-dangle': 'off',
     'radix': 'off',
     'camelcase': 'off',
     'no-console': 'off',

@@ -1,118 +1,137 @@
 const _ = require('lodash');
-const db = require('../utils/mysql-util');
+const mongo = require('../utils/mongo-util');
+
+const PostInfo = mongo.getModule('postInfo');
+const Dict = mongo.getModule('dict');
+const Att = mongo.getModule('att');
+const PostAndAtt = mongo.getModule('postAndAtt');
+const PostAndTag = mongo.getModule('postAndTag');
+const UserAndRequest = mongo.getModule('userAndRequest');
+const User = mongo.getModule('user');
+const AreaCode = mongo.getModule('areaCode');
 
 module.exports.findAll = async (params, skip, take, same_city) => {
-  let sql = `select i.*,u.username,r.name as user_role,
-            a.path as avatar_path,c.name as city_name,u.sex
-                from post_info i
-              left join user u on u.id = i.create_by
-              left join att a on a.id = u.avatar
-              left join role r on r.id = u.role_id
-              left join area_code c on c.id = SUBSTR(i.city_code,3,2) and c.parent_id = SUBSTR(i.city_code,1,2)
-                where i.delete_flag = 0`;
-  let countSql = `select count(i.id) as total
-                      from post_info i
-                  left join user u on u.id = i.create_by
-                  left join role r on r.id = u.role_id
-                    where i.delete_flag = 0`;
-  let query = '';
-  const pm = [];
-  const pm2 = [];
+  const fp = {delete_flag: 0};
   if (params.sex !== null) {
-    query += ' and u.sex = ?';
-    pm.push(params.sex);
-    pm2.push(params.sex);
+    fp.sex = params.sex;
   }
   if (params.role_id) {
-    query += ' and i.role_id = ?';
-    pm.push(params.role_id);
-    pm2.push(params.role_id);
+    fp.role_id = params.role_id;
   }
   if (params.city_code) {
-    query += ' and i.city_code = ?';
-    pm.push(params.city_code);
-    pm2.push(params.city_code);
+    fp.city_code = params.city_code;
   } else if (same_city) {
-    query += ' and i.city_code = (select city_code from user where id = ?) ';
-    pm.push(params.uid);
-    pm2.push(params.uid);
+    const user = await User.findById(params.uid);
+    fp.city_code = user.city_code;
+    fp.create_by = {$ne: params.uid};
   }
-  sql += `${query} order by create_at desc limit ?,?;`;
-  pm.push(skip);
-  pm.push(take);
-  const rl = await db.execSql(sql, pm);
-  const sql2 = `select a.path from att a
-                  left join post_and_att b on b.att_id = a.id
-                where b.post_id = ? and type = 2;`;
-  const sql3 = `select name from tag t
-                  left join info_and_tag i on i.tag_id = t.id
-                  left join post_info p on p.id = i.info_id
-                where p.id = ?;`;
-  const content = await Promise.all(_.map(rl, async x => {
-    const paths = await db.execSql(sql2, [x.id]);
-    const tags = await db.execSql(sql3, [x.id]);
-    x.att_path = paths.map(y => { return y.path; });
-    x.tags = tags.map(y => { return y.name; });
+  const rl = await PostInfo.find(fp).skip(skip).limit(take).sort({create_at: -1});
+  const result = await Promise.all(_.map(rl, async r => {
+    const x = JSON.parse(JSON.stringify(r));
+    const u = await User.findById(x.create_by);
+    x.username = u.username;
+    x.sex = u.sex;
+    const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+    x.user_role = role.name;
+    const att = await Att.findOne({_id: u.avatar}, {path: 1});
+    x.avatar_path = att.path;
+    const area = await AreaCode.findOne({
+      id: x.city_code.substr(2, 2),
+      parent_id: x.city_code.substr(0, 2)
+    });
+    x.city_name = area.name;
+    const tags = await PostAndTag.find({post_id: x._id, type: 2}, {tag_id: 1});
+    const tagIds = _.map(tags, 'tag_id');
+    const tagNames = await Dict.find({_id: {$in: tagIds}}, {name: 1});
+    x.tags = _.map(tagNames, 'name');
+    const atts = await PostAndAtt.find({post_id: x._id, type: 2}, {att_id: 1});
+    const attIds = _.map(atts, 'att_id');
+    const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
+    x.atts = _.map(attPaths, 'path');
+    delete x.city_code;
+    delete x.role_id;
+    delete x.create_by;
     return x;
   }));
-  countSql += query;
-  const total = await db.execSql(countSql, pm2);
+  const total = await PostInfo.countDocuments(fp);
   return {
-    content,
-    totalElements: total[0].total
+    content: result,
+    totalElements: total
   };
 };
 
 module.exports.save = async params => {
-  const conn = await db.openTrans();
-  // 更新
-  if (params.post_info.id) {
-    const id = params.post_info.id;
-    delete params.post_info.id;
-    const sql = 'update post_info set ? where id = ?;';
-    const sql2 = 'delete from info_and_tag where info_id = ?;';
-    const sql3 = 'delete from att where id in(select att_id from post_and_att where post_id = ? and type = 2);';
-    const sql4 = 'delete from post_and_att where post_id = ? and type = 2;';
-    const sql5 = 'insert into info_and_tag set ?';
-    const sql6 = 'insert into att set ?';
-    const sql7 = 'insert into post_and_att set ?';
-    await Promise.all([
-      db.execSql(sql, [params.post_info, id], conn),
-      db.execSql(sql2, [id], conn),
-      db.execSql(sql3, [id], conn),
-      db.execSql(sql4, [id], conn)
-    ]);
-    await Promise.all(_.map(params.tags, async x => {
-      return db.execSql(sql5, {tag_id: x, info_id: id}, conn);
-    }));
-    await Promise.all(_.map(params.atts, async x => {
-      const rl = await db.execSql(sql6, {path: x}, conn);
-      await db.execSql(sql7, {att_id: rl.insertId, post_id: id, type: 2}, conn);
-    }));
-  } else {
-  // 插入
-    const sql = 'insert into post_info set ?';
-    const sql2 = 'insert into info_and_tag set ?';
-    const sql3 = 'insert into att set ?';
-    const sql4 = 'insert into post_and_att set ?';
-    const result = await db.execSql(sql, params.post_info, conn);
-    await Promise.all(_.map(params.tags, async x => {
-      return db.execSql(sql2, {tag_id: x, info_id: result.insertId}, conn);
-    }));
-    await Promise.all(_.map(params.atts, async x => {
-      const rl = await db.execSql(sql3, {path: x}, conn);
-      await db.execSql(sql4, {att_id: rl.insertId, post_id: result.insertId, type: 2}, conn);
-    }));
+  const id = params.post_info.id;
+  delete params.post_info.id;
+  const session = await mongo.getSession();
+  session.startTransaction();
+  try {
+    const opts = { session, new: true };
+    // 更新
+    if (id) {
+      await PostInfo.findOneAndUpdate({_id: id}, params.post_info, opts);
+      const atts = await PostAndAtt.find({post_id: id, type: 2}, {att_id: 1, _id: 0});
+      const att_ids = _.map(atts, 'att_id');
+      await Promise.all([
+        Att.deleteMany({_id: {$in: att_ids}}).session(session),
+        PostAndAtt.remove({post_id: id, type: 2}).session(session),
+        PostAndTag.remove({post_id: id, type: 2}).session(session)
+      ]);
+      await Promise.all(_.map(params.tags, async x => {
+        const postAndTag = new PostAndTag({
+          tag_id: x,
+          post_id: id,
+          type: 2
+        });
+        await postAndTag.save(opts);
+      }));
+      await Promise.all(_.map(params.atts, async x => {
+        const att = new Att({path: x});
+        const a = await att.save(opts);
+        const postAndAtt = new PostAndAtt({
+          att_id: a._id,
+          post_id: id,
+          type: 2
+        });
+        await postAndAtt.save(opts);
+      }));
+    } else {
+      // 新增
+      const postInfo = new PostInfo(params.post_info);
+      const p = await postInfo.save(opts);
+      await Promise.all(_.map(params.tags, async x => {
+        const postAndTag = new PostAndTag({
+          tag_id: x,
+          post_id: p._id,
+          type: 2
+        });
+        await postAndTag.save(opts);
+      }));
+      await Promise.all(_.map(params.atts, async x => {
+        const att = new Att({path: x});
+        const a = await att.save(opts);
+        const postAndAtt = new PostAndAtt({
+          att_id: a._id,
+          post_id: p._id,
+          type: 2
+        });
+        await postAndAtt.save(opts);
+      }));
+    }
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-  await db.commitTrans(conn);
 };
 
 module.exports.delete = async (uid, info_id) => {
-  const sql = 'update post_info set delete_flag = 1 where create_by = ? and id = ?;';
-  return db.execSql(sql, [uid, info_id]);
+  return PostInfo.findOneAndUpdate({_id: info_id, create_by: uid}, {delete_flag: 1});
 };
 
 module.exports.addRequest = async params => {
-  const sql = 'insert into user_and_request set ?';
-  return db.execSql(sql, params);
+  const userAndRequest = new UserAndRequest(params);
+  return userAndRequest.save();
 };

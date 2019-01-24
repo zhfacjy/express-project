@@ -10,7 +10,7 @@ class UserController {
   }
 
   async modify(req, res) {
-    const result = await userServ.modify(req.body, req.cookie.uid);
+    const result = await userServ.modify(req.body, req.cookies.uid);
     res.send(result);
   }
 

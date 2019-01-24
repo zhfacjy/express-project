@@ -4,4 +4,4 @@ node_modules/*
 uploads/*
 
 index.js
-utils/init-test.js
+utils/cityData.js

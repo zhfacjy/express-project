@@ -1,84 +1,109 @@
 const crypto = require('crypto');
-
 const config = require('../config');
-const db = require('../utils/mysql-util');
+const mongo = require('../utils/mongo-util');
+
+const User = mongo.getModule('user');
+const Att = mongo.getModule('att');
+const Follow = mongo.getModule('follow');
+const City = mongo.getModule('areaCode');
+const Info = mongo.getModule('postInfo');
+const Dict = mongo.getModule('dict');
 
 module.exports.register = async params => {
   const avatar_path = params.avatar;
-  const conn = await db.openTrans();
-  const sql = 'insert into att set ?';
-  const rl = await db.execSql(sql, {path: avatar_path}, conn);
-  const sql2 = 'insert into user set ?';
-  params.avatar = rl.insertId;
-  const result = await db.execSql(sql2, params, conn);
-  // 加密
-  const saltPassword = `${params.password}:${result.insertId}${config.salt}`;
-  const ps = crypto.createHash('md5').update(saltPassword).digest('hex');
-  const sql3 = 'update user set password = ? where id = ?;';
-  await db.execSql(sql3, [ps, result.insertId], conn);
-  await db.commitTrans(conn);
+  const session = await mongo.getSession();
+  session.startTransaction();
+  try {
+    const opts = { session, new: true };
+    const att = new Att({path: avatar_path});
+    const a = await att.save(opts);
+    params.avatar = a._id;
+    const user = new User(params);
+    const b = await user.save(opts);
+    // 加密
+    const saltPassword = `${params.password}:${b._id}${config.salt}`;
+    const ps = crypto.createHash('md5').update(saltPassword).digest('hex');
+    await User.findOneAndUpdate({_id: b._id}, {password: ps}, opts);
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 };
 
 module.exports.hasExistMob = async mobile => {
-  const sql = 'select mobile from user where mobile = ?;';
-  const rl = await db.execSql(sql, [mobile]);
-  if (rl.length > 0) return {code: 401, message: '该电话号码已存在！'};
+  const hasExist = await User.countDocuments({mobile: mobile});
+  if (hasExist !== 0) return {code: 401, message: '该电话号码已存在！'};
   return {code: 0, data: null};
 };
 
-module.exports.modify = async (params, id) => {
-  const sql4 = 'select mobile from user where mobile = ?;';
-  const rl = await db.execSql(sql4, [params.mobile]);
-  if (rl.length > 0) return {code: 401, message: '该电话号码已存在！'};
+module.exports.modify = async (params, uid) => {
+  const avatar = await User.findById(uid, {avatar: 1, mobile: 1});
+  if (params.mobile !== avatar.mobile) {
+    const hasExist = await User.countDocuments({mobile: params.mobile});
+    if (hasExist !== 0) return {code: 401, message: '该电话号码已存在！'};
+  }
+  const att_id = avatar.avatar; // 删除用
   const avatar_path = params.avatar;
-  const conn = await db.openTrans();
-  const sql3 = 'delete from att where id = (select avatar from user where id = ?)';
-  const sql = 'insert into att set ?';
-  const rl2 = await Promise.all([
-    db.execSql(sql, {path: avatar_path}, conn),
-    db.execSql(sql3, [id], conn)
-  ]);
   // 加密
-  const saltPassword = `${params.password}:${id}${config.salt}`;
+  const saltPassword = `${params.password}:${uid}${config.salt}`;
   const ps = crypto.createHash('md5').update(saltPassword).digest('hex');
-  const sql2 = 'update user set ? where id = ?';
-  params.avatar = rl2[0].insertId;
   params.password = ps;
-  await db.execSql(sql2, [params, id], conn);
-  await db.commitTrans(conn);
+
+  const session = await mongo.getSession();
+  session.startTransaction();
+  try {
+    const opts = { session, new: true };
+    const att = new Att({path: avatar_path});
+    const a = await att.save(opts);
+    params.avatar = a._id;
+    await User.findOneAndUpdate({_id: uid}, params, opts);
+    await Att.deleteOne({_id: att_id});
+
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
   return {code: 0, data: null};
 };
 
 module.exports.addFollow = async params => {
-  const sql = 'insert into follow set ?';
-  return db.execSql(sql, params);
+  const follow = new Follow(params);
+  return follow.save();
 };
 
 module.exports.deFollow = async (user_id, follow_id) => {
-  const sql = 'delete from follow where user_id = ? and follow_id = ?;';
-  return db.execSql(sql, [user_id, follow_id]);
+  return Follow.deleteOne({user_id, follow_id});
 };
 
 module.exports.userInfo = async (user_id, uid) => {
-  const sql = `select u.id,u.username,u.sex,a.path as avatar_path,
-                r.name as role_name,c.name as city_name
-                  from user u
-                left join att a on a.id = u.avatar
-                left join role r on r.id = u.role_id
-                left join area_code c on c.id = SUBSTR(u.city_code,3,2) and c.parent_id = SUBSTR(u.city_code,1,2)
-              where u.id = ?;`;
-  const sql2 = 'select count(*) as info_num from post_info where create_by = ? and delete_flag = 0;';
-  const sql3 = 'select count(*) as follow_num from follow where user_id = ?;';
-  const sql4 = 'select count(*) as has_follow from follow where user_id = ? and follow_id = ?;';
-  const rl = await Promise.all([
-    db.execSql(sql, [user_id]),
-    db.execSql(sql2, [user_id]),
-    db.execSql(sql3, [user_id]),
-    db.execSql(sql4, [user_id, uid])
-  ]);
-  const user = rl[0][0];
-  user.info_num = rl[1][0].info_num;
-  user.follow_num = rl[2][0].follow_num;
-  user.has_follow = rl[3][0].has_follow;
-  return user;
+  const rl = await User.findById(user_id);
+  const user = JSON.parse(JSON.stringify(rl));
+  const att = await Att.findById(user.avatar);
+  const city = await City.findOne({
+    parent_id: user.city_code.substr(0, 2),
+    id: user.city_code.substr(2, 2)
+  });
+  const role = await Dict.findById(user.role_id);
+  const follow_num = await Follow.countDocuments({user_id});
+  const has_follow = await Follow.countDocuments({user_id, follow_id: uid});
+  const info_num = await Info.countDocuments({create_by: user_id});
+  delete user.password;
+  delete user.avatar;
+  delete user.role_id;
+  user.role = role.name;
+  user.city_name = city.name;
+  user.avatar_path = att.path;
+  user.info_num = info_num;
+  user.follow_num = follow_num;
+  user.has_follow = has_follow;
+  return {
+    code: 0,
+    data: user
+  };
 };

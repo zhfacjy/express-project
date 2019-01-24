@@ -1,82 +1,110 @@
 const _ = require('lodash');
-const db = require('../utils/mysql-util');
+const mongo = require('../utils/mongo-util');
+
+const PostWork = mongo.getModule('postWorks');
+const Dict = mongo.getModule('dict');
+const Att = mongo.getModule('att');
+const PostAndAtt = mongo.getModule('postAndAtt');
+const PostAndTag = mongo.getModule('postAndTag');
+const User = mongo.getModule('user');
 
 module.exports.findAll = async (skip, take) => {
-  const sql = `select w.*,u.username,r.name as user_role,a.path as avatar_path,u.sex
-              from post_works w
-            left join user u on u.id = w.create_by
-            left join att a on a.id = u.avatar
-            left join role r on r.id = u.role_id
-              where w.delete_flag = 0
-            ORDER BY w.create_at desc limit ?,?;`;
-  const countSql = 'select count(id) as total from post_works where delete_flag = 0;';
-  const rl = await db.execSql(sql, [skip, take]);
-  const sql2 = `select a.path from att a
-                  left join post_and_att b on b.att_id = a.id
-                where b.post_id = ? and type = 1;`;
-  const sql3 = `select name from tag t
-              left join works_and_tag i on i.tag_id = t.id
-              left join post_works p on p.id = i.works_id
-                where p.id = ?;`;
-  const content = await Promise.all(_.map(rl, async x => {
-    const paths = await db.execSql(sql2, [x.id]);
-    const tags = await db.execSql(sql3, [x.id]);
-    x.att_path = paths.map(y => { return y.path; });
-    x.tags = tags.map(y => { return y.name; });
+  const rl = await PostWork.find({delete_flag: 0}).skip(skip).limit(take).sort({create_at: -1});
+  const result = await Promise.all(_.map(rl, async r => {
+    const x = JSON.parse(JSON.stringify(r));
+    const u = await User.findById(x.create_by);
+    x.username = u.username;
+    x.sex = u.sex;
+    const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+    x.user_role = role.name;
+    const att = await Att.findOne({_id: u.avatar}, {path: 1});
+    x.avatar_path = att.path;
+    const tags = await PostAndTag.find({post_id: x._id, type: 1}, {tag_id: 1});
+    const tagIds = _.map(tags, 'tag_id');
+    const tagNames = await Dict.find({_id: {$in: tagIds}}, {name: 1});
+    x.tags = _.map(tagNames, 'name');
+    const atts = await PostAndAtt.find({post_id: x._id, type: 1}, {att_id: 1});
+    const attIds = _.map(atts, 'att_id');
+    const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
+    x.atts = _.map(attPaths, 'path');
+    delete x.role_id;
+    delete x.create_by;
     return x;
   }));
-  const total = await db.execSql(countSql);
+  const total = await PostWork.countDocuments({delete_flag: 0});
   return {
-    content,
-    totalElements: total[0].total
+    content: result,
+    totalElements: total
   };
 };
 
 module.exports.save = async params => {
-  const conn = await db.openTrans();
-  // 更新
-  if (params.post_works.id) {
-    const id = params.post_works.id;
-    delete params.post_works.id;
-    const sql = 'update post_works set ? where id = ?;';
-    const sql2 = 'delete from works_and_tag where works_id = ?;';
-    const sql3 = 'delete from att where id in(select att_id from post_and_att where post_id = ? and type = 1);';
-    const sql4 = 'delete from post_and_att where post_id = ? and type = 1;';
-    const sql5 = 'insert into works_and_tag set ?';
-    const sql6 = 'insert into att set ?';
-    const sql7 = 'insert into post_and_att set ?';
-    await Promise.all([
-      db.execSql(sql, [params.post_works, id], conn),
-      db.execSql(sql2, [id], conn),
-      db.execSql(sql3, [id], conn),
-      db.execSql(sql4, [id], conn)
-    ]);
-    await Promise.all(_.map(params.tags, async x => {
-      return db.execSql(sql5, {tag_id: x, works_id: id}, conn);
-    }));
-    await Promise.all(_.map(params.atts, async x => {
-      const rl = await db.execSql(sql6, {path: x}, conn);
-      await db.execSql(sql7, {att_id: rl.insertId, post_id: id, type: 1}, conn);
-    }));
-  } else {
-  // 插入
-    const sql = 'insert into post_works set ?';
-    const sql2 = 'insert into works_and_tag set ?';
-    const sql3 = 'insert into att set ?';
-    const sql4 = 'insert into post_and_att set ?';
-    const result = await db.execSql(sql, params.post_works, conn);
-    await Promise.all(_.map(params.tags, async x => {
-      return db.execSql(sql2, {tag_id: x, works_id: result.insertId}, conn);
-    }));
-    await Promise.all(_.map(params.atts, async x => {
-      const rl = await db.execSql(sql3, {path: x}, conn);
-      await db.execSql(sql4, {att_id: rl.insertId, post_id: result.insertId, type: 1}, conn);
-    }));
+  const id = params.post_works.id;
+  delete params.post_works.id;
+  const session = await mongo.getSession();
+  session.startTransaction();
+  try {
+    const opts = { session, new: true };
+    // 更新
+    if (id) {
+      await PostWork.findOneAndUpdate({_id: id}, params.post_works, opts);
+      const atts = await PostAndAtt.find({post_id: id, type: 1}, {att_id: 1, _id: 0});
+      const att_ids = _.map(atts, 'att_id');
+      await Promise.all([
+        Att.deleteMany({_id: {$in: att_ids}}).session(session),
+        PostAndAtt.remove({post_id: id, type: 1}).session(session),
+        PostAndTag.remove({post_id: id, type: 1}).session(session)
+      ]);
+      await Promise.all(_.map(params.tags, async x => {
+        const postAndTag = new PostAndTag({
+          tag_id: x,
+          post_id: id,
+          type: 1
+        });
+        await postAndTag.save(opts);
+      }));
+      await Promise.all(_.map(params.atts, async x => {
+        const att = new Att({path: x});
+        const a = await att.save(opts);
+        const postAndAtt = new PostAndAtt({
+          att_id: a._id,
+          post_id: id,
+          type: 1
+        });
+        await postAndAtt.save(opts);
+      }));
+    } else {
+      // 新增
+      const postWork = new PostWork(params.post_works);
+      const p = await postWork.save(opts);
+      await Promise.all(_.map(params.tags, async x => {
+        const postAndTag = new PostAndTag({
+          tag_id: x,
+          post_id: p._id,
+          type: 1
+        });
+        await postAndTag.save(opts);
+      }));
+      await Promise.all(_.map(params.atts, async x => {
+        const att = new Att({path: x});
+        const a = await att.save(opts);
+        const postAndAtt = new PostAndAtt({
+          att_id: a._id,
+          post_id: p._id,
+          type: 1
+        });
+        await postAndAtt.save(opts);
+      }));
+    }
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-  await db.commitTrans(conn);
 };
 
 module.exports.delete = async (uid, works_id) => {
-  const sql = 'update post_works set delete_flag = 1 where create_by = ? and id = ?;';
-  return db.execSql(sql, [uid, works_id]);
+  return PostWork.findOneAndUpdate({_id: works_id, create_by: uid}, {delete_flag: 1});
 };
