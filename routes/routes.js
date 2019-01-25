@@ -161,14 +161,14 @@ module.exports = app => {
   // 收藏
   app.post('/my/collect', celebrate({
     body: {
-      post_id: Joi.string().require().min(1),
+      post_id: Joi.string().required().min(1),
       type: Joi.number().required().integer().valid([1, 2])
     }
   }), Controllers.my.addCollect);
   // 删除收藏
   app.delete('/my/collect/:post_id/:type', celebrate({
     params: {
-      post_id: Joi.string().require().min(1),
+      post_id: Joi.string().required().min(1),
       type: Joi.number().required().integer().valid([1, 2])
     }
   }), Controllers.my.removeCollect);
@@ -180,11 +180,11 @@ module.exports = app => {
   }), Controllers.my.collectList);
   // 我的约拍
   app.get('/my/postInfo/:user_id', pageable, celebrate({
-    params: {user_id: Joi.string().require().min(1)}
+    params: {user_id: Joi.string().required().min(1)}
   }), Controllers.my.postInfo);
   // 我的作品
   app.get('/my/postWorks/:user_id', pageable, celebrate({
-    params: {user_id: Joi.string().require().min(1)}
+    params: {user_id: Joi.string().required().min(1)}
   }), Controllers.my.postWorks);
 
   app.use(errors());
