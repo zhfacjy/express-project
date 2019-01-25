@@ -4,6 +4,7 @@ module.exports.getSchema = mongoose => {
     user_id: String,
     content: String,
     contact: String,
+    create_by: String,
     create_at: {
       type: Date,
       default: new Date()

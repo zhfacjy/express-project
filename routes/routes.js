@@ -186,6 +186,8 @@ module.exports = app => {
   app.get('/my/postWorks/:user_id', pageable, celebrate({
     params: {user_id: Joi.string().required().min(1)}
   }), Controllers.my.postWorks);
+  // 我接收的
+  app.get('/my/receiver', pageable, Controllers.my.receiver);
 
   app.use(errors());
 };

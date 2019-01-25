@@ -11,6 +11,10 @@ module.exports.getSchema = mongoose => {
       type: Number,
       default: 0
     },
+    has_request: {
+      type: Number,
+      default: 0
+    },
     create_by: String,
     create_at: {
       type: Date,

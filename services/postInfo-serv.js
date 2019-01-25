@@ -11,7 +11,7 @@ const User = mongo.getModule('user');
 const AreaCode = mongo.getModule('areaCode');
 
 module.exports.findAll = async (params, skip, take, same_city) => {
-  const fp = {delete_flag: 0};
+  const fp = {delete_flag: 0, has_request: 0};
   if (params.sex !== null) {
     fp.sex = params.sex;
   }
@@ -133,5 +133,6 @@ module.exports.delete = async (uid, info_id) => {
 
 module.exports.addRequest = async params => {
   const userAndRequest = new UserAndRequest(params);
-  return userAndRequest.save();
+  await userAndRequest.save();
+  await PostInfo.findOneAndUpdate({_id: params.post_id}, {has_request: 1});
 };

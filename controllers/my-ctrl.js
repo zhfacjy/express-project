@@ -35,6 +35,14 @@ class MyController {
     );
     res.send(result);
   }
+
+  async receiver(req, res) {
+    const result = await myServ.receiver(req.cookies.uid, req.query.skip, req.query.take);
+    res.send({
+      code: 0,
+      data: result
+    });
+  }
 }
 
 module.exports = new MyController();

@@ -30,6 +30,7 @@ class PostInfoController {
   }
 
   async addRequest(req, res) {
+    req.body.create_by = req.cookies.uid;
     await postInfoServ.addRequest(req.body);
     res.send({code: 0, data: null});
   }
