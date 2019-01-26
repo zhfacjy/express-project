@@ -8,8 +8,10 @@ module.exports = {
   salt: 'lo#g?in', // 密码加密盐
   mongo: {
     url: 'mongodb://localhost:37017,localhost:47017/test', // test 是数据库，2个localhost是主从mongo地址
+    // url: 'mongodb://localhost:27017,localhost:33213/fuckdb0', // test 是数据库，2个localhost是主从mongo地址
     options: {
       replicaSet: 'rs',
+      // replicaSet: 'rs0',
       poolSize: 10,
       // w: 1,
       useNewUrlParser: true
