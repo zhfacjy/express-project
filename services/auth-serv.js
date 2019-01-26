@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const config = require('../config');
 const mongo = require('../utils/mongo-util');
 
+const Dict = mongo.getModule('dict');
+
 // 包装生成令牌异步函数
 const jwtSign = data => {
   return new Promise((resolve, reject) => {
@@ -19,7 +21,11 @@ const jwtSign = data => {
   });
 };
 
-module.exports.login = async (mobile, password) => {
+module.exports.login = async (mobile, password, isAdmin) => {
+  if (isAdmin) {
+    const role = await Dict.countDocuments({name: '管理员', type: 2});
+    if (role === 0) return {code: 400, data: {message: '该用户不是管理员！'}};
+  }
   const query = mongo.getModule('user').where({mobile: mobile});
   const user = await query.findOne();
   if (!user) {

@@ -79,6 +79,13 @@ module.exports = app => {
       password: Joi.string().required().allow().min(1).max(256)
     })
   }), Controllers.auth.login);
+  // 后台登录
+  app.post('/auth/admin/login', celebrate({
+    body: Joi.object().keys({
+      mobile: Joi.string().required().length(11),
+      password: Joi.string().required().allow().min(1).max(256)
+    })
+  }), Controllers.auth.adminLogin);
 
   // 图片上传
   app.post('/att/upload', Controllers.att.uploadFile);
