@@ -1,3 +1,4 @@
+// 1. 标签  2. 角色
 module.exports = [
   {
     name: '摄影师',
@@ -8,11 +9,7 @@ module.exports = [
     type: 2
   },
   {
-    name: '鸽子王',
-    type: 2
-  },
-  {
-    name: '炮王',
+    name: 'admin',
     type: 2
   },
   {

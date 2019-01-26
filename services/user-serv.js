@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const _ = require('lodash');
 const config = require('../config');
 const mongo = require('../utils/mongo-util');
 
@@ -7,6 +8,7 @@ const Att = mongo.getModule('att');
 const Follow = mongo.getModule('follow');
 const City = mongo.getModule('areaCode');
 const Info = mongo.getModule('postInfo');
+const Work = mongo.getModule('postWorks');
 const Dict = mongo.getModule('dict');
 
 module.exports.register = async params => {
@@ -109,4 +111,48 @@ module.exports.userInfo = async (user_id, uid) => {
     code: 0,
     data: user
   };
+};
+
+module.exports.getUserList = async (uid, skip, take) => {
+  const user = await User.findById(uid);
+  const role = await Dict.countDocuments({_id: user.role_id, type: 2, name: 'admin'});
+  if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
+  const rl = await User.find(
+    {_id: {$ne: uid}}, {username: 1, mobile: 1, create_at: 1}
+  ).skip(skip).limit(take).sort({create_at: -1});
+  const result = await Promise.all(_.map(rl, async r => {
+    const x = JSON.parse(JSON.stringify(r));
+    const infoNum = await Info.countDocuments({create_by: x._id, delete_flag: 0});
+    const workNum = await Work.countDocuments({create_by: x._id, delete_flag: 0});
+    x.info_num = infoNum;
+    x.works_num = workNum;
+    return x;
+  }));
+  return result;
+};
+
+module.exports.deleteUser = async (uid, user_id) => {
+  const user = await User.findById(uid);
+  const role = await Dict.countDocuments({_id: user.role_id, type: 2, name: 'admin'});
+  if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
+  const infos = await Info.find({create_by: user_id, delete_flag: 0}, {_id: 1});
+  const works = await Work.find({create_by: user_id, delete_flag: 0}, {_id: 1});
+  const session = await mongo.getSession();
+  session.startTransaction();
+  try {
+    await User.remove({_id: user_id}).session(session);
+    await Promise.all(_.map(infos, async x => {
+      await Info.findOneAndUpdate({_id: x._id}, {delete_flag: 1}, session);
+    }));
+    await Promise.all(_.map(works, async x => {
+      await Work.findOneAndUpdate({_id: x._id}, {delete_flag: 1}, session);
+    }));
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+  return {code: 0, data: null};
 };

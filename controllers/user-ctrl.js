@@ -32,6 +32,18 @@ class UserController {
     const result = await userServ.userInfo(req.params.user_id, req.cookies.uid);
     res.send(result);
   }
+
+  async getList(req, res) {
+    const result = await userServ.getUserList(
+      req.cookies.uid, req.query.skip, req.query.take
+    );
+    res.send({code: 0, data: result});
+  }
+
+  async deleteUser(req, res) {
+    const result = await userServ.deleteUser(req.cookies.uid, req.params.user_id);
+    res.send(result);
+  }
 }
 
 module.exports = new UserController();

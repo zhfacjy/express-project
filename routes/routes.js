@@ -12,7 +12,7 @@ const pageable = celebrate({
 module.exports = app => {
   // 创建表
   app.get('/build', Controllers.build.build);
-  // 导入city
+  // 导入city、dict 数据
   app.get('/build/imp', Controllers.build.impData);
 
   // 获取字典 1. 标签  2. 角色
@@ -72,6 +72,15 @@ module.exports = app => {
   app.get('/user/info/:user_id', celebrate({
     params: {user_id: Joi.string().required().min(1)}
   }), Controllers.user.userInfo);
+  // 获取用户列表
+  app.get('/user/list', pageable, Controllers.user.getList);
+  // 删除用户
+  app.delete('/user/:user_id', celebrate({
+    params: {
+      user_id: Joi.string().required().min(1)
+    }
+  }), Controllers.user.deleteUser);
+
   // 登录
   app.post('/auth/login', celebrate({
     body: Joi.object().keys({
