@@ -10,6 +10,8 @@ const Info = mongo.getModule('postInfo');
 const Dict = mongo.getModule('dict');
 
 module.exports.register = async params => {
+  const hasExist = await User.countDocuments({mobile: params.mobile});
+  if (hasExist !== 0) return {code: 401, message: '该电话号码已存在！'};
   const avatar_path = params.avatar;
   const session = await mongo.getSession();
   session.startTransaction();
@@ -31,6 +33,7 @@ module.exports.register = async params => {
     session.endSession();
     throw error;
   }
+  return {code: 0, data: null};
 };
 
 module.exports.hasExistMob = async mobile => {

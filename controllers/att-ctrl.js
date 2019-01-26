@@ -13,7 +13,7 @@ class AttController {
     upload(req, res, err => {
       if (err) {
         console.log(err);
-        res.send({code: 500, message: '文件保存失败'});
+        res.send({code: 500, message: '文件保存失败！'});
         fs.unlinkSync(req.file.path, err3 => {
           console.log(err3);
         });
@@ -32,24 +32,33 @@ class AttController {
         return;
       }
       const uid = uuid.v1();
-      const tmp_path = req.file.path;
+      // const tmp_path = req.file.path;
       const target_path = `${__dirname}/../uploads/${uid}.${fileType}`;
-      const src = fs.createReadStream(tmp_path);
-      const dest = fs.createWriteStream(target_path);
-      src.pipe(dest);
-      src.on('end', () => {
-        res.send({code: 0, path: `/uploads/${uid}.${fileType}`});
-      });
-      src.on('error', err2 => {
-        res.end();
-        console.log(err2);
-        res.send({code: 500, message: '文件保存失败'});
-      });
-      fs.unlinkSync(tmp_path, err3 => {
-        console.log(err3);
+      fs.readFile(req.file.path, (err1, data) => {
+        if (err1) res.send({code: 500, message: '文件保存失败！'});
+        fs.writeFile(target_path, data, err2 => {
+          if (err2) res.send({code: 500, message: '文件保存失败！'});
+          res.send({code: 0, data: {path: `/uploads/${uid}.${fileType}`}});
+        });
       });
     });
   }
+
+  // const src = fs.createReadStream(tmp_path);
+  //     const dest = fs.createWriteStream(target_path);
+  //     let result = {};
+  //     src.pipe(dest);
+  //     src.on('error', err2 => {
+  //       res.end();
+  //       console.log(err2);
+  //       res.send({code: 500, message: '文件保存失败'});
+  //     });
+  //     src.on('end', () => {
+  //       result = {code: 0, path: `/uploads/${uid}.${fileType}`};
+  //     });
+  //     fs.unlinkSync(tmp_path, err3 => {
+  //       console.log(err3);
+  //     });
 
   async view(req, res) {
     const filePath = `${__dirname}/..${req.query.path}`;
