@@ -2,7 +2,7 @@ module.exports = {
   server_port: 3000,
   secret: 'fuck.646',
   ignoreUrl: [
-    '/auth/login', '/att/view', '/postInfo/search',
+    '/auth/login', '/att/view', '/postInfo/search', '/build', '/build/imp', '/att/upload',
     '/postWorks/search', '/user/register', '/dict', '/auth/admin/login'
   ], // 不需要验证的路由
   salt: 'lo#g?in', // 密码加密盐
