@@ -15,15 +15,19 @@ class BuildController {
   }
 
   async impData(req, res) {
-    await AreaCode.remove({});
     await Promise.all(cityData.map(async c => {
-      const city = new AreaCode(c);
-      await city.save();
+      const has = await AreaCode.countDocuments(d);
+      if (has === 0) {
+        const city = new AreaCode(c);
+        await city.save();
+      }
     }));
-    await Dict.remove({});
     await Promise.all(dictData.map(async d => {
-      const dict = new Dict(d);
-      await dict.save();
+      const has = await Dict.countDocuments(d);
+      if (has === 0) {
+        const dict = new Dict(d);
+        await dict.save();
+      }
     }));
     res.send({code: 0, data: null});
   }

@@ -28,7 +28,7 @@ module.exports.login = async (mobile, password, isAdmin) => {
     return {code: 401, data: {message: '该用户不存在！'}};
   }
   if (isAdmin) {
-    const role = await Dict.countDocuments({name: 'admin', type: 2, _id: user.role_id});
+    const role = await Dict.countDocuments({name: 'admin', type: 2, dict_code: user.role_id});
     if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
   }
   // 加密

@@ -32,7 +32,7 @@ module.exports.getCollectList = async (user_id, type, skip, take) => {
       const u = await User.findById(x.create_by);
       x.username = u.username;
       x.sex = u.sex;
-      const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+      const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
       x.user_role = role.name;
       const att = await Att.findOne({_id: u.avatar}, {path: 1});
       x.avatar_path = att.path;
@@ -60,7 +60,7 @@ module.exports.getCollectList = async (user_id, type, skip, take) => {
     const u = await User.findById(x.create_by);
     x.username = u.username;
     x.sex = u.sex;
-    const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+    const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
     x.user_role = role.name;
     const att = await Att.findOne({_id: u.avatar}, {path: 1});
     x.avatar_path = att.path;
@@ -98,7 +98,7 @@ module.exports.getPostList = async (user_id, type, skip, take) => {
       const u = await User.findById(x.create_by);
       x.username = u.username;
       x.sex = u.sex;
-      const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+      const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
       x.user_role = role.name;
       const att = await Att.findOne({_id: u.avatar}, {path: 1});
       x.avatar_path = att.path;
@@ -126,7 +126,7 @@ module.exports.getPostList = async (user_id, type, skip, take) => {
     const u = await User.findById(x.create_by);
     x.username = u.username;
     x.sex = u.sex;
-    const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+    const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
     x.user_role = role.name;
     const att = await Att.findOne({_id: u.avatar}, {path: 1});
     x.avatar_path = att.path;
@@ -166,7 +166,7 @@ module.exports.receiver = async (user_id, skip, take) => {
     const u = await User.findById(x.create_by);
     x.username = u.username;
     x.sex = u.sex;
-    const role = await Dict.findOne({_id: u.role_id}, {name: 1});
+    const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
     x.user_role = role.name;
     const att = await Att.findOne({_id: u.avatar}, {path: 1});
     x.avatar_path = att.path;

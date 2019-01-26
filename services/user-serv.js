@@ -94,7 +94,7 @@ module.exports.userInfo = async (user_id, uid) => {
     parent_id: user.city_code.substr(0, 2),
     id: user.city_code.substr(2, 2)
   });
-  const role = await Dict.findById(user.role_id);
+  const role = await Dict.findOne({dict_code: user.role_id, type: 2});
   const follow_num = await Follow.countDocuments({user_id});
   const has_follow = await Follow.countDocuments({user_id, follow_id: uid});
   const info_num = await Info.countDocuments({create_by: user_id});
@@ -115,7 +115,7 @@ module.exports.userInfo = async (user_id, uid) => {
 
 module.exports.getUserList = async (uid, skip, take) => {
   const user = await User.findById(uid);
-  const role = await Dict.countDocuments({_id: user.role_id, type: 2, name: 'admin'});
+  const role = await Dict.countDocuments({dict_code: user.role_id, type: 2, name: 'admin'});
   if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
   const rl = await User.find(
     {_id: {$ne: uid}}, {username: 1, mobile: 1, create_at: 1}
@@ -133,7 +133,7 @@ module.exports.getUserList = async (uid, skip, take) => {
 
 module.exports.deleteUser = async (uid, user_id) => {
   const user = await User.findById(uid);
-  const role = await Dict.countDocuments({_id: user.role_id, type: 2, name: 'admin'});
+  const role = await Dict.countDocuments({dict_code: user.role_id, type: 2, name: 'admin'});
   if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
   const infos = await Info.find({create_by: user_id, delete_flag: 0}, {_id: 1});
   const works = await Work.find({create_by: user_id, delete_flag: 0}, {_id: 1});

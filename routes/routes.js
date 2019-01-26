@@ -22,7 +22,7 @@ module.exports = app => {
   // 添加或修改字典 1. 标签  2. 角色
   app.post('/dict/save', celebrate({
     body: Joi.object().keys({
-      type: Joi.number().required().integer().valid([1, 2]),
+      type: Joi.number().required().integer().valid([1]),
       id: Joi.string().allow(null).allow('').min(1),
       name: Joi.string().required().min(1).max(30)
     })
@@ -41,7 +41,7 @@ module.exports = app => {
       avatar: Joi.string().required().min(1),
       city_code: Joi.string().required().length(4),
       sex: Joi.number().required().integer().valid([0, 1]),
-      role_id: Joi.string().required().min(1)
+      role_id: Joi.number().required().integer().min(1)
     })
   }), Controllers.user.register);
   // 修改个人信息
@@ -53,7 +53,7 @@ module.exports = app => {
       avatar: Joi.string().required().min(1),
       city_code: Joi.string().required().length(4),
       sex: Joi.number().required().integer().valid([0, 1]),
-      role_id: Joi.string().required().min(1)
+      role_id: Joi.number().required().integer().min(1)
     }
   }), Controllers.user.modify);
   // 关注
@@ -110,7 +110,7 @@ module.exports = app => {
     body: Joi.object().keys({
       city_code: Joi.string().allow(null).allow('').max(4),
       sex: Joi.number().integer().allow(null).valid([0, 1]),
-      role_id: Joi.string().allow(null).allow('')
+      role_id: Joi.number().integer().allow(null).min(1)
     })
   }), Controllers.postInfo.findAll);
   // 同城约拍列表
@@ -118,7 +118,7 @@ module.exports = app => {
     body: Joi.object().keys({
       city_code: Joi.string().allow(null).allow('').max(4),
       sex: Joi.number().integer().allow(null).valid([0, 1]),
-      role_id: Joi.string().allow(null).allow('')
+      role_id: Joi.number().integer().allow(null).min(1)
     })
   }), Controllers.postInfo.sameCity);
   // 添加或修改约拍
@@ -132,7 +132,7 @@ module.exports = app => {
         photograph_time: Joi.string().allow(null).allow('').max(100),
         filming: Joi.string().allow(null).allow('').max(100),
         photograph_mode: Joi.number().integer().allow(null),
-        role_id: Joi.string().required().min(1)
+        role_id: Joi.number().required().integer().min(1)
       }),
       tags: Joi.array().items(Joi.string().min(1)).unique(),
       atts: Joi.array().items(Joi.string().max(100))

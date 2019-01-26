@@ -2,34 +2,22 @@
 module.exports = [
   {
     name: '摄影师',
+    dict_code: 1,
     type: 2
   },
   {
     name: '模特',
+    dict_code: 2,
+    type: 2
+  },
+  {
+    name: '其他',
+    dict_code: 3,
     type: 2
   },
   {
     name: 'admin',
+    dict_code: 4,
     type: 2
-  },
-  {
-    name: '标签1',
-    type: 1
-  },
-  {
-    name: '标签2',
-    type: 1
-  },
-  {
-    name: '标签4',
-    type: 1
-  },
-  {
-    name: '标签3',
-    type: 1
-  },
-  {
-    name: '标签5',
-    type: 1
   }
 ];

@@ -3,7 +3,7 @@ const mongo = require('../utils/mongo-util');
 const Dict = mongo.getModule('dict');
 
 module.exports.getListByType = async type => {
-  if (type === 2) return  Dict.find({type: type, name: {$ne: 'admin'}}, {_id: 1, name: 1});
+  if (type === 2) return  Dict.find({type: type, name: {$ne: 'admin'}}, {dict_code: 1, name: 1});
   return Dict.find({type: type}, {_id: 1, name: 1});
 };
 
