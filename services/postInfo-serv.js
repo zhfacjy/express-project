@@ -55,7 +55,7 @@ module.exports.findAll = async (params, skip, take, same_city, login_id) => {
     x.request_role = requestRole.name;
     delete x.city_code;
     // delete x.role_id;
-    delete x.create_by;
+    // delete x.create_by;
     if (login_id) {
       const c = await Collect.countDocuments({user_id: login_id, post_id: x._id});
       x.has_collect = c;
