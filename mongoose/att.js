@@ -3,7 +3,7 @@ module.exports.getSchema = mongoose => {
     path: String,
     create_at: {
       type: Date,
-      default: new Date()
+      default: Date.now
     }
   }, {collection: 'att'}));
 };

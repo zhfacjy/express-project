@@ -7,7 +7,7 @@ module.exports.getSchema = mongoose => {
     create_by: String,
     create_at: {
       type: Date,
-      default: new Date()
+      default: Date.now
     }
   }, {collection: 'dict'}));
 };

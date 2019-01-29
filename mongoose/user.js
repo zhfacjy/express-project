@@ -9,7 +9,7 @@ module.exports.getSchema = mongoose => {
     role_id: String,
     create_at: {
       type: Date,
-      default: new Date()
+      default: Date.now
     }
   }, {collection: 'user'}));
 };

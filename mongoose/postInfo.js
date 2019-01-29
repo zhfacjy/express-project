@@ -19,7 +19,7 @@ module.exports.getSchema = mongoose => {
     create_by_sex: Number,
     create_at: {
       type: Date,
-      default: new Date()
+      default: Date.now
     }
   }, {collection: 'post_info'}));
 };
