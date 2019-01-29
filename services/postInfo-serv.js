@@ -48,8 +48,11 @@ module.exports.findAll = async (params, skip, take, same_city) => {
     const attIds = _.map(atts, 'att_id');
     const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
     x.atts = _.map(attPaths, 'path');
+    // 约拍对象
+    const requestRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
+    x.request_role = requestRole.name;
     delete x.city_code;
-    delete x.role_id;
+    // delete x.role_id;
     delete x.create_by;
     return x;
   }));
