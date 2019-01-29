@@ -43,6 +43,14 @@ class MyController {
       data: result
     });
   }
+
+  async mySend(req, res) {
+    const result = await myServ.mySend(req.cookies.uid, req.query.skip, req.query.take);
+    res.send({
+      code: 0,
+      data: result
+    });
+  }
 }
 
 module.exports = new MyController();

@@ -204,6 +204,8 @@ module.exports = app => {
   }), Controllers.my.postWorks);
   // 我接收的
   app.get('/my/receiver', pageable, Controllers.my.receiver);
+  // 我发送的
+  app.get('/my/send', pageable, Controllers.my.mySend);
 
   app.use(errors());
 };

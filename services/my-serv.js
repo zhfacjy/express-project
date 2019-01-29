@@ -185,3 +185,34 @@ module.exports.receiver = async (user_id, skip, take) => {
     totalElements: total
   };
 };
+
+module.exports.mySend = async (user_id, skip, take) => {
+  const rl = await UserAndRequest.find(
+    {create_by: user_id}
+  ).skip(skip).limit(take).sort({create_at: -1});
+  const postIds = _.map(rl, 'post_id');
+  const postInfos = await PostInfo.find({_id: {$in: postIds}});
+  const result = await Promise.all(_.map(rl, async r => {
+    const has = _.find(postInfos, p => p._id === r.post_id);
+    const x = JSON.parse(JSON.stringify(r));
+    x.post_info = has;
+    const u = await User.findById(x.create_by);
+    x.username = u.username;
+    x.sex = u.sex;
+    const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
+    x.user_role = role.name;
+    const att = await Att.findOne({_id: u.avatar}, {path: 1});
+    x.avatar_path = att.path;
+    const area = await AreaCode.findOne({
+      id: u.city_code.substr(2, 2),
+      parent_id: u.city_code.substr(0, 2)
+    });
+    x.city_name = area.name;
+    return x;
+  }));
+  const total = await UserAndRequest.countDocuments({user_id: user_id});
+  return {
+    content: result,
+    totalElements: total
+  };
+};
