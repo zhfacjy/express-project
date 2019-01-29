@@ -13,7 +13,7 @@ const AreaCode = mongo.getModule('areaCode');
 module.exports.findAll = async (params, skip, take, same_city) => {
   const fp = {delete_flag: 0, has_request: 0};
   if (params.sex !== null) {
-    fp.sex = params.sex;
+    fp.create_by_sex = params.sex;
   }
   if (params.role_id) {
     fp.role_id = params.role_id;
@@ -65,6 +65,8 @@ module.exports.save = async params => {
   delete params.post_info.id;
   const session = await mongo.getSession();
   session.startTransaction();
+  const user = await User.findById(params.post_info.create_by);
+  params.post_info.create_by_sex = user.sex;
   try {
     const opts = { session, new: true };
     // 更新
