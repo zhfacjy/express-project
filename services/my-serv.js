@@ -161,8 +161,10 @@ module.exports.receiver = async (user_id, skip, take) => {
   ).skip(skip).limit(take).sort({create_at: -1});
   const postIds = _.map(rl, 'post_id');
   const postInfos = await PostInfo.find({_id: {$in: postIds}});
-  const result = await Promise.all(_.map(postInfos, async p => {
-    const x = JSON.parse(JSON.stringify(p));
+  const result = await Promise.all(_.map(rl, async r => {
+    const has = _.find(postInfos, p => p._id === r.post_id);
+    const x = JSON.parse(JSON.stringify(r));
+    x.post_info = has;
     const u = await User.findById(x.create_by);
     x.username = u.username;
     x.sex = u.sex;
@@ -171,21 +173,10 @@ module.exports.receiver = async (user_id, skip, take) => {
     const att = await Att.findOne({_id: u.avatar}, {path: 1});
     x.avatar_path = att.path;
     const area = await AreaCode.findOne({
-      id: x.city_code.substr(2, 2),
-      parent_id: x.city_code.substr(0, 2)
+      id: u.city_code.substr(2, 2),
+      parent_id: u.city_code.substr(0, 2)
     });
     x.city_name = area.name;
-    const tags = await PostAndTag.find({post_id: x._id, type: 2}, {tag_id: 1});
-    const tagIds = _.map(tags, 'tag_id');
-    const tagNames = await Dict.find({_id: {$in: tagIds}}, {name: 1});
-    x.tags = _.map(tagNames, 'name');
-    const atts = await PostAndAtt.find({post_id: x._id, type: 2}, {att_id: 1});
-    const attIds = _.map(atts, 'att_id');
-    const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
-    x.atts = _.map(attPaths, 'path');
-    delete x.city_code;
-    delete x.role_id;
-    delete x.create_by;
     return x;
   }));
   const total = await UserAndRequest.countDocuments({user_id: user_id});

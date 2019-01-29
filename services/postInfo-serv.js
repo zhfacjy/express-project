@@ -8,10 +8,11 @@ const PostAndAtt = mongo.getModule('postAndAtt');
 const PostAndTag = mongo.getModule('postAndTag');
 const UserAndRequest = mongo.getModule('userAndRequest');
 const User = mongo.getModule('user');
+const Collect = mongo.getModule('collect');
 const AreaCode = mongo.getModule('areaCode');
 
-module.exports.findAll = async (params, skip, take, same_city) => {
-  const fp = {delete_flag: 0, has_request: 0};
+module.exports.findAll = async (params, skip, take, same_city, login_id) => {
+  const fp = {delete_flag: 0};
   if (params.sex !== null) {
     fp.create_by_sex = params.sex;
   }
@@ -48,9 +49,20 @@ module.exports.findAll = async (params, skip, take, same_city) => {
     const attIds = _.map(atts, 'att_id');
     const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
     x.atts = _.map(attPaths, 'path');
+    x.has_collect = 0;
     delete x.city_code;
     delete x.role_id;
     delete x.create_by;
+    if (login_id) {
+      const c = await Collect.countDocuments({user_id: login_id, post_id: x._id});
+      x.has_collect = c;
+    }
+    const uq = await UserAndRequest.find({post_id: x.id}, {create_by: 1});
+    const rquids = _.map(uq, 'create_by');
+    const users = await User.find({_id: {$in: rquids}}, {avatar: 1});
+    const avatars = _.map(users, 'avatar');
+    const avatar_atts = await Att.find({_id: {$in: avatars}}, {path: 1});
+    x.request_avatars = _.map(avatar_atts, 'path');
     return x;
   }));
   const total = await PostInfo.countDocuments(fp);
@@ -135,6 +147,5 @@ module.exports.delete = async (uid, info_id) => {
 
 module.exports.addRequest = async params => {
   const userAndRequest = new UserAndRequest(params);
-  await userAndRequest.save();
-  await PostInfo.findOneAndUpdate({_id: params.post_id}, {has_request: 1});
+  return userAndRequest.save();
 };
