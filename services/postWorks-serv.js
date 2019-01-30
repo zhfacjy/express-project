@@ -7,8 +7,9 @@ const Att = mongo.getModule('att');
 const PostAndAtt = mongo.getModule('postAndAtt');
 const PostAndTag = mongo.getModule('postAndTag');
 const User = mongo.getModule('user');
+const Collect = mongo.getModule('collect');
 
-module.exports.findAll = async (skip, take) => {
+module.exports.findAll = async (skip, take, login_id) => {
   const rl = await PostWork.find({delete_flag: 0}).skip(skip).limit(take).sort({create_at: -1});
   const result = await Promise.all(_.map(rl, async r => {
     const x = JSON.parse(JSON.stringify(r));
@@ -29,6 +30,11 @@ module.exports.findAll = async (skip, take) => {
     x.atts = _.map(attPaths, 'path');
     delete x.role_id;
     delete x.create_by;
+    x.has_collect = 0;
+    if (login_id) {
+      const c = await Collect.countDocuments({user_id: login_id, post_id: x._id});
+      x.has_collect = c;
+    }
     return x;
   }));
   const total = await PostWork.countDocuments({delete_flag: 0});

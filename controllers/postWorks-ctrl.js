@@ -2,7 +2,9 @@ const postWorksServ = require('../services/postWorks-serv');
 
 class PostWorksController {
   async findAll(req, res) {
-    const result = await postWorksServ.findAll(req.query.skip, req.query.take);
+    let login = '';
+    if (JSON.stringify(req.cookies) !== '{}') login = req.cookies.uid;
+    const result = await postWorksServ.findAll(req.query.skip, req.query.take, login);
     res.send({
       code: 0,
       data: result

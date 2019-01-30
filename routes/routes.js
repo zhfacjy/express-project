@@ -174,7 +174,7 @@ module.exports = app => {
     params: {works_id: Joi.number().required().integer().min(1)}
   }), Controllers.postWorks.delete);
 
-  // 收藏
+  // 添加收藏
   app.post('/my/collect', celebrate({
     body: {
       post_id: Joi.string().required().min(1),

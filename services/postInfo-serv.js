@@ -60,7 +60,7 @@ module.exports.findAll = async (params, skip, take, same_city, login_id) => {
       const c = await Collect.countDocuments({user_id: login_id, post_id: x._id});
       x.has_collect = c;
     }
-    const uq = await UserAndRequest.find({post_id: x.id}, {create_by: 1});
+    const uq = await UserAndRequest.find({post_id: x._id}, {create_by: 1});
     const rquids = _.map(uq, 'create_by');
     const users = await User.find({_id: {$in: rquids}}, {avatar: 1});
     const avatars = _.map(users, 'avatar');
