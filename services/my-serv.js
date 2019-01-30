@@ -216,3 +216,7 @@ module.exports.mySend = async (user_id, skip, take) => {
     totalElements: total
   };
 };
+
+module.exports.hasCollect = async (uid, post_id) => {
+  return Collect.countDocuments({user_id: uid, post_id: post_id});
+};

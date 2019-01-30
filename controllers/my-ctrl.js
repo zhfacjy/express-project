@@ -1,6 +1,11 @@
 const myServ = require('../services/my-serv');
 
 class MyController {
+  async hasCollect(req, res) {
+    const hasCollect = await myServ.hasCollect(req.cookies.uid, req.params.post_id);
+    res.send({code: 0, data: hasCollect});
+  }
+
   async addCollect(req, res) {
     req.body.user_id = req.cookies.uid;
     await myServ.addCollect(req.body);
