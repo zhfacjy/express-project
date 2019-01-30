@@ -48,7 +48,9 @@ module.exports.login = async (mobile, password, isAdmin) => {
       username: user.username,
       city_code: user.city_code,
       avatar_path: att.path,
-      role: user.role_id
+      role: user.role_id,
+      sex: user.sex,
+      mobile: user.mobile
     }
   };
 };
