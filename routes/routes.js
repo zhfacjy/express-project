@@ -175,8 +175,11 @@ module.exports = app => {
   }), Controllers.postWorks.delete);
 
   // 判断是否已收藏
-  app.get('/has/collect/:post_id', celebrate({
-    params: { post_id: Joi.string().required().min(1) }
+  app.get('/has/collect/:type/:post_id', celebrate({
+    params: {
+      post_id: Joi.string().required().min(1),
+      type: Joi.number().required().integer().valid([1, 2])
+    }
   }), Controllers.my.hasCollect);
   // 添加收藏
   app.post('/my/collect', celebrate({
@@ -193,11 +196,7 @@ module.exports = app => {
     }
   }), Controllers.my.removeCollect);
   // 我收藏的
-  app.get('/my/collect/:type', pageable, celebrate({
-    params: {
-      type: Joi.number().required().integer().valid([1, 2])
-    }
-  }), Controllers.my.collectList);
+  app.get('/my/collect', pageable, Controllers.my.collectList);
   // 我的约拍
   app.get('/my/postInfo/:user_id', pageable, celebrate({
     params: {user_id: Joi.string().required().min(1)}
