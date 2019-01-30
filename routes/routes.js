@@ -45,10 +45,9 @@ module.exports = app => {
     })
   }), Controllers.user.register);
   // 修改个人信息
-  app.post('/user/modify', celebrate({
+  app.put('/user/modify', celebrate({
     body: {
       username: Joi.string().required().min(1).max(100),
-      password: Joi.string().required().min(1),
       mobile: Joi.string().required().length(11),
       avatar: Joi.string().required().min(1),
       city_code: Joi.string().required().length(4),
@@ -56,6 +55,13 @@ module.exports = app => {
       role_id: Joi.number().required().integer().min(1)
     }
   }), Controllers.user.modify);
+  // 修改密码
+  app.put('/user/modify/password', celebrate({
+    body: {
+      old_password: Joi.string().required().min(1),
+      new_password: Joi.string().required().min(1)
+    }
+  }), Controllers.user.modifyPassword);
   // 关注
   app.post('/user/follow/:user_id', celebrate({
     params: {
@@ -174,6 +180,13 @@ module.exports = app => {
     params: {works_id: Joi.number().required().integer().min(1)}
   }), Controllers.postWorks.delete);
 
+  // 判断是否已收藏
+  app.get('/has/collect/:type/:post_id', celebrate({
+    params: {
+      post_id: Joi.string().required().min(1),
+      type: Joi.number().required().integer().valid([1, 2])
+    }
+  }), Controllers.my.hasCollect);
   // 添加收藏
   app.post('/my/collect', celebrate({
     body: {
@@ -189,11 +202,7 @@ module.exports = app => {
     }
   }), Controllers.my.removeCollect);
   // 我收藏的
-  app.get('/my/collect/:type', pageable, celebrate({
-    params: {
-      type: Joi.number().required().integer().valid([1, 2])
-    }
-  }), Controllers.my.collectList);
+  app.get('/my/collect', pageable, Controllers.my.collectList);
   // 我的约拍
   app.get('/my/postInfo/:user_id', pageable, celebrate({
     params: {user_id: Joi.string().required().min(1)}

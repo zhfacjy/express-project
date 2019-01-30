@@ -52,10 +52,6 @@ module.exports.modify = async (params, uid) => {
   }
   const att_id = avatar.avatar; // 删除用
   const avatar_path = params.avatar;
-  // 加密
-  const saltPassword = `${params.password}:${uid}${config.salt}`;
-  const ps = crypto.createHash('md5').update(saltPassword).digest('hex');
-  params.password = ps;
 
   const session = await mongo.getSession();
   session.startTransaction();
@@ -74,6 +70,18 @@ module.exports.modify = async (params, uid) => {
     session.endSession();
     throw error;
   }
+  return {code: 0, data: null};
+};
+
+module.exports.modifyPassword = async (uid, oldps, newps) => {
+  // 加密
+  const saltPassword = `${oldps}:${uid}${config.salt}`;
+  const ps = crypto.createHash('md5').update(saltPassword).digest('hex');
+  const has = await User.countDocuments({_id: uid, password: ps});
+  if (has === 0) return {code: 401, message: '原密码错误！'};
+  const newPassword = `${newps}:${uid}${config.salt}`;
+  const nps = crypto.createHash('md5').update(newPassword).digest('hex');
+  await User.findOneAndUpdate({_id: uid}, {password: nps});
   return {code: 0, data: null};
 };
 
@@ -116,7 +124,7 @@ module.exports.userInfo = async (user_id, uid) => {
 module.exports.getUserList = async (uid, skip, take) => {
   const user = await User.findById(uid);
   const role = await Dict.countDocuments({dict_code: user.role_id, type: 2, name: 'admin'});
-  if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
+  if (role === 0) return {code: 401, message: '该用户不是管理员！'};
   const rl = await User.find(
     {_id: {$ne: uid}}, {username: 1, mobile: 1, create_at: 1}
   ).skip(skip).limit(take).sort({create_at: -1});
@@ -134,7 +142,7 @@ module.exports.getUserList = async (uid, skip, take) => {
 module.exports.deleteUser = async (uid, user_id) => {
   const user = await User.findById(uid);
   const role = await Dict.countDocuments({dict_code: user.role_id, type: 2, name: 'admin'});
-  if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
+  if (role === 0) return {code: 401, message: '该用户不是管理员！'};
   const infos = await Info.find({create_by: user_id, delete_flag: 0}, {_id: 1});
   const works = await Work.find({create_by: user_id, delete_flag: 0}, {_id: 1});
   const session = await mongo.getSession();

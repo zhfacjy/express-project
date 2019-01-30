@@ -21,14 +21,14 @@ module.exports.removeCollect = async (post_id, user_id, type) => {
   return Collect.remove({post_id, user_id, type});
 };
 
-module.exports.getCollectList = async (user_id, type, skip, take) => {
-  const posts = await Collect.find({user_id: user_id, type}, {post_id: 1});
-  const postIds = _.map(posts, 'post_id');
-  const fp = {delete_flag: 0, _id: {$in: postIds}};
-  if (type === 1) {
-    const rl = await PostWork.find(fp).skip(skip).limit(take).sort({create_at: -1});
-    const result = await Promise.all(_.map(rl, async r => {
-      const x = JSON.parse(JSON.stringify(r));
+module.exports.getCollectList = async (user_id, skip, take) => {
+  const collects = await Collect.find({
+    user_id: user_id, delete_flag: 0
+  }, {post_id: 1, type: 1}).skip(skip).limit(take).sort({create_at: -1});
+  const result = await Promise.all(_.map(collects, async c => {
+    if (c.type === 1) {
+      const p = await PostWork.findById(c.post_id);
+      const x = JSON.parse(JSON.stringify(p));
       const u = await User.findById(x.create_by);
       x.username = u.username;
       x.sex = u.sex;
@@ -46,17 +46,11 @@ module.exports.getCollectList = async (user_id, type, skip, take) => {
       x.atts = _.map(attPaths, 'path');
       delete x.role_id;
       delete x.create_by;
+      x.post_type = 1;
       return x;
-    }));
-    const total = await PostWork.countDocuments(fp);
-    return {
-      content: result,
-      totalElements: total
-    };
-  }
-  const rl = await PostInfo.find(fp).skip(skip).limit(take).sort({create_at: -1});
-  const result = await Promise.all(_.map(rl, async r => {
-    const x = JSON.parse(JSON.stringify(r));
+    }
+    const p = await PostInfo.findById(c.post_id);
+    const x = JSON.parse(JSON.stringify(p));
     const u = await User.findById(x.create_by);
     x.username = u.username;
     x.sex = u.sex;
@@ -79,10 +73,10 @@ module.exports.getCollectList = async (user_id, type, skip, take) => {
     x.atts = _.map(attPaths, 'path');
     delete x.city_code;
     delete x.role_id;
-    delete x.create_by;
+    x.post_type = 2;
     return x;
   }));
-  const total = await PostInfo.countDocuments(fp);
+  const total = await Collect.countDocuments({user_id: user_id, delete_flag: 0});
   return {
     content: result,
     totalElements: total
@@ -215,4 +209,8 @@ module.exports.mySend = async (user_id, skip, take) => {
     content: result,
     totalElements: total
   };
+};
+
+module.exports.hasCollect = async (uid, post_id, type) => {
+  return Collect.countDocuments({user_id: uid, post_id: post_id, type: type});
 };

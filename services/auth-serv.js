@@ -25,17 +25,17 @@ module.exports.login = async (mobile, password, isAdmin) => {
   const query = mongo.getModule('user').where({mobile: mobile});
   const user = await query.findOne();
   if (!user) {
-    return {code: 401, data: {message: '该用户不存在！'}};
+    return {code: 401, message: '该用户不存在！'};
   }
   if (isAdmin) {
     const role = await Dict.countDocuments({name: 'admin', type: 2, dict_code: user.role_id});
-    if (role === 0) return {code: 401, data: {message: '该用户不是管理员！'}};
+    if (role === 0) return {code: 401, message: '该用户不是管理员！'};
   }
   // 加密
   const saltPassword = `${password}:${user._id}${config.salt}`;
   const ps = crypto.createHash('md5').update(saltPassword).digest('hex');
   if (user.password !== ps) {
-    return {code: 400, data: {message: '账号或密码错误！'}};
+    return {code: 400, message: '账号或密码错误！'};
   }
   const query2 = mongo.getModule('att').where({_id: user.avatar});
   const att = await query2.findOne();

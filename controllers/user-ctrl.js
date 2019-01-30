@@ -11,6 +11,13 @@ class UserController {
     res.send(result);
   }
 
+  async modifyPassword(req, res) {
+    const result = await userServ.modifyPassword(
+      req.cookies.uid, req.body.old_password, req.body.new_password
+    );
+    res.send(result);
+  }
+
   async hasExistMob(req, res) {
     const result = await userServ.hasExistMob(req.params.mobile);
     res.send(result);
