@@ -45,10 +45,9 @@ module.exports = app => {
     })
   }), Controllers.user.register);
   // 修改个人信息
-  app.post('/user/modify', celebrate({
+  app.put('/user/modify', celebrate({
     body: {
       username: Joi.string().required().min(1).max(100),
-      password: Joi.string().required().min(1),
       mobile: Joi.string().required().length(11),
       avatar: Joi.string().required().min(1),
       city_code: Joi.string().required().length(4),
@@ -56,6 +55,13 @@ module.exports = app => {
       role_id: Joi.number().required().integer().min(1)
     }
   }), Controllers.user.modify);
+  // 修改密码
+  app.put('/user/modify/password', celebrate({
+    body: {
+      old_password: Joi.string().required().min(1),
+      new_password: Joi.string().required().min(1)
+    }
+  }), Controllers.user.modifyPassword);
   // 关注
   app.post('/user/follow/:user_id', celebrate({
     params: {
