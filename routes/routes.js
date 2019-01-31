@@ -178,7 +178,7 @@ module.exports = app => {
   }), Controllers.postWorks.add);
   // 删除作品
   app.delete('/postWorks/:works_id', celebrate({
-    params: {works_id: Joi.number().required().integer().min(1)}
+    params: {works_id: Joi.string().required().min(1)}
   }), Controllers.postWorks.delete);
 
   // 判断是否已收藏

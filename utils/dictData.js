@@ -11,13 +11,20 @@ module.exports = [
     type: 2
   },
   {
-    name: '其他',
-    dict_code: 3,
-    type: 2
-  },
-  {
     name: 'admin',
     dict_code: 4,
     type: 2
+  },
+  {
+    name: '校园',
+    type: 1
+  },
+  {
+    name: '可爱',
+    type: 1
+  },
+  {
+    name: '性感',
+    type: 1
   }
 ];

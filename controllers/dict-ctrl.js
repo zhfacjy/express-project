@@ -11,10 +11,10 @@ class DictController {
 
   async save(req, res) {
     req.body.create_by = req.cookies.uid;
-    await dictServ.save(req.body);
+    const result = await dictServ.save(req.body);
     res.send({
       code: 0,
-      data: null
+      data: result
     });
   }
 }
