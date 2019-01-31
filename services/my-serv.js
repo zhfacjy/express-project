@@ -135,6 +135,12 @@ module.exports.getPostList = async (user_id, type) => {
     // 约拍对象
     const requestRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
     x.request_role = requestRole.name;
+    const uq = await UserAndRequest.find({post_id: x._id}, {create_by: 1});
+    const rquids = _.map(uq, 'create_by');
+    const users = await User.find({_id: {$in: rquids}}, {avatar: 1});
+    const avatars = _.map(users, 'avatar');
+    const avatar_atts = await Att.find({_id: {$in: avatars}}, {path: 1});
+    x.request_avatars = _.map(avatar_atts, 'path');
     return x;
   }));
   return result;
