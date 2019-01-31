@@ -5,6 +5,10 @@ module.exports.getSchema = mongoose => {
     content: String,
     contact: String,
     create_by: String,
+    has_read: {
+      type: Number,
+      default: 0
+    },
     create_at: {
       type: Date,
       default: Date.now

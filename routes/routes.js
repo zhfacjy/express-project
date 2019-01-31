@@ -202,19 +202,21 @@ module.exports = app => {
     }
   }), Controllers.my.removeCollect);
   // 我收藏的
-  app.get('/my/collect', pageable, Controllers.my.collectList);
+  app.get('/my/collect', Controllers.my.collectList);
   // 我的约拍
-  app.get('/my/postInfo/:user_id', pageable, celebrate({
+  app.get('/my/postInfo/:user_id', celebrate({
     params: {user_id: Joi.string().required().min(1)}
   }), Controllers.my.postInfo);
   // 我的作品
-  app.get('/my/postWorks/:user_id', pageable, celebrate({
+  app.get('/my/postWorks/:user_id', celebrate({
     params: {user_id: Joi.string().required().min(1)}
   }), Controllers.my.postWorks);
   // 我接收的
-  app.get('/my/receiver', pageable, Controllers.my.receiver);
+  app.get('/my/receiver', Controllers.my.receiver);
   // 我发送的
-  app.get('/my/send', pageable, Controllers.my.mySend);
+  app.get('/my/send', Controllers.my.mySend);
+  // 判断消息是否有未读
+  app.get('/my/has/not/read', Controllers.my.hasNotRead);
 
   app.use(errors());
 };
