@@ -44,9 +44,10 @@ module.exports.getCollectList = async user_id => {
       const attIds = _.map(atts, 'att_id');
       const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
       x.atts = _.map(attPaths, 'path');
-      delete x.role_id;
-      delete x.create_by;
       x.post_type = 1;
+      // 作品对象
+      const worksRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
+      x.works_role = worksRole.name;
       return x;
     }
     const p = await PostInfo.findById(c.post_id);
@@ -71,8 +72,9 @@ module.exports.getCollectList = async user_id => {
     const attIds = _.map(atts, 'att_id');
     const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
     x.atts = _.map(attPaths, 'path');
-    delete x.city_code;
-    delete x.role_id;
+    // 约拍对象
+    const requestRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
+    x.request_role = requestRole.name;
     x.post_type = 2;
     return x;
   }));
@@ -100,8 +102,9 @@ module.exports.getPostList = async (user_id, type) => {
       const attIds = _.map(atts, 'att_id');
       const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
       x.atts = _.map(attPaths, 'path');
-      delete x.role_id;
-      delete x.create_by;
+      // 作品对象
+      const worksRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
+      x.works_role = worksRole.name;
       return x;
     }));
     return result;
@@ -129,9 +132,9 @@ module.exports.getPostList = async (user_id, type) => {
     const attIds = _.map(atts, 'att_id');
     const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
     x.atts = _.map(attPaths, 'path');
-    delete x.city_code;
-    delete x.role_id;
-    delete x.create_by;
+    // 约拍对象
+    const requestRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
+    x.request_role = requestRole.name;
     return x;
   }));
   return result;
@@ -188,8 +191,6 @@ module.exports.sendOrReceiver = async (user_id, sendOrReceiver) => {
     const requestRole = await Dict.findOne({dict_code: has.role_id, type: 2}, {name: 1});
     has.request_role = requestRole.name;
     delete has.city_code;
-    // delete x.role_id;
-    // delete x.create_by;
     const c = await Collect.countDocuments({user_id: user_id, post_id: has._id});
     has.has_collect = c;
     const uq = await UserAndRequest.find({post_id: has._id}, {create_by: 1});

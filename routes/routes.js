@@ -169,7 +169,8 @@ module.exports = app => {
         title: Joi.string().required().min(1).max(100),
         device: Joi.string().allow(null).allow('').max(100),
         address: Joi.string().allow(null).allow('').max(100),
-        return_film: Joi.number().required().integer().valid([0, 1])
+        return_film: Joi.number().required().integer().valid([0, 1]),
+        role_id: Joi.number().required().integer().min(1)
       }),
       tags: Joi.array().items(Joi.string().min(1)).unique(),
       atts: Joi.array().min(1).items(Joi.string().max(100))

@@ -28,8 +28,9 @@ module.exports.findAll = async (skip, take, login_id) => {
     const attIds = _.map(atts, 'att_id');
     const attPaths = await Att.find({_id: {$in: attIds}}, {path: 1});
     x.atts = _.map(attPaths, 'path');
-    delete x.role_id;
-    delete x.create_by;
+    // 作品对象
+    const worksRole = await Dict.findOne({dict_code: x.role_id, type: 2}, {name: 1});
+    x.works_role = worksRole.name;
     x.has_collect = 0;
     if (login_id) {
       const c = await Collect.countDocuments({user_id: login_id, post_id: x._id});

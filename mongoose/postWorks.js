@@ -5,6 +5,7 @@ module.exports.getSchema = mongoose => {
     device: String,
     address: String,
     return_film: Number,
+    role_id: String,
     delete_flag: {
       type: Number,
       default: 0
