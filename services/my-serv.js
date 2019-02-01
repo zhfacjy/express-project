@@ -146,6 +146,7 @@ module.exports.getPostList = async (user_id, type) => {
   return result;
 };
 
+// sendOrReceiver 1 是send  0 是 receiver
 module.exports.sendOrReceiver = async (user_id, sendOrReceiver) => {
   const fp = {};
   if (sendOrReceiver) {
@@ -209,7 +210,7 @@ module.exports.sendOrReceiver = async (user_id, sendOrReceiver) => {
     x.post_info = has;
     return x;
   }));
-  await UserAndRequest.update(fp, {has_read: 1});
+  if (!sendOrReceiver) await UserAndRequest.updateMany(fp, {has_read: 1});
   return result;
 };
 

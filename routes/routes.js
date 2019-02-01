@@ -97,7 +97,7 @@ module.exports = app => {
   // 后台登录
   app.post('/auth/admin/login', celebrate({
     body: Joi.object().keys({
-      mobile: Joi.string().required().length(11),
+      mobile: Joi.string().required().min(1),
       password: Joi.string().required().allow().min(1).max(256)
     })
   }), Controllers.auth.adminLogin);

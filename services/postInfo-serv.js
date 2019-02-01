@@ -143,7 +143,7 @@ module.exports.save = async params => {
 
 module.exports.delete = async (uid, info_id) => {
   await PostInfo.findOneAndUpdate({_id: info_id, create_by: uid}, {delete_flag: 1});
-  return Collect.update({post_id: info_id}, {delete_flag: 1});
+  return Collect.updateMany({post_id: info_id}, {delete_flag: 1});
 };
 
 module.exports.addRequest = async params => {

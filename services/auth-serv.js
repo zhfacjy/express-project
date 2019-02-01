@@ -27,9 +27,13 @@ module.exports.login = async (mobile, password, isAdmin) => {
   if (!user) {
     return {code: 401, message: '该用户不存在！'};
   }
-  if (isAdmin) {
-    const role = await Dict.countDocuments({name: 'admin', type: 2, dict_code: user.role_id});
-    if (role === 0) return {code: 401, message: '该用户不是管理员！'};
+  // 判断管理员
+  const role = await Dict.countDocuments({name: 'admin', type: 2, dict_code: user.role_id});
+  if (isAdmin && role === 0) {
+    return {code: 401, message: '该用户不是管理员！'};
+  }
+  if (!isAdmin && role !== 0) {
+    return {code: 401, message: '账号或密码错误！'};
   }
   // 加密
   const saltPassword = `${password}:${user._id}${config.salt}`;
