@@ -7,7 +7,7 @@ module.exports = {
   ], // 不需要验证的路由
   salt: 'lo#g?in', // 密码加密盐
   mysql: {
-    host: '111.230.151.93',
+    host: '127.0.0.1',
     port: 3306,
     user: 'root',
     password: 'fuck.646',
