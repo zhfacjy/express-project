@@ -115,6 +115,7 @@ module.exports.userInfo = async (user_id, uid) => {
   user.info_num = info_num;
   user.follow_num = follow_num;
   user.has_follow = has_follow;
+  user.create_at = new Date(user.create_at).toLocaleString();
   return {
     code: 0,
     data: user
@@ -134,6 +135,7 @@ module.exports.getUserList = async (uid, skip, take) => {
     const workNum = await Work.countDocuments({create_by: x._id, delete_flag: 0});
     x.info_num = infoNum;
     x.works_num = workNum;
+    x.create_at = new Date(x.create_at).toLocaleString();
     return x;
   }));
   return result;

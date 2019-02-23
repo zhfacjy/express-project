@@ -10,7 +10,7 @@ const Dict = mongo.getModule('dict');
 const jwtSign = data => {
   return new Promise((resolve, reject) => {
     jwt.sign(data, config.secret, {
-      expiresIn: 60 * 60 * 24 * 30 // 测试阶段，token 有效时间 30 天
+      expiresIn: 60 * 60 * 24 * config.tokenActiveDay // 测试阶段，token 有效时间 30 天
     }, (err, token) => {
       if (err) {
         reject(err);

@@ -17,5 +17,6 @@ module.exports = {
       // w: 1,
       useNewUrlParser: true
     }
-  }
+  },
+  tokenActiveDay: 1 // token 有效时间 天
 };
