@@ -30,7 +30,7 @@ module.exports.getCollectList = async user_id => {
       const p = await PostWork.findById(c.post_id);
       const x = JSON.parse(JSON.stringify(p));
       const u = await User.findById(x.create_by);
-      x.create_at = new Date(x.create_at).toLocaleString();
+      x.create_at = new Date(x.create_at - 24 * 60 * 60 * 1000).toLocaleString();
       x.username = u.username;
       x.sex = u.sex;
       const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
@@ -54,7 +54,7 @@ module.exports.getCollectList = async user_id => {
     const p = await PostInfo.findById(c.post_id);
     const x = JSON.parse(JSON.stringify(p));
     const u = await User.findById(x.create_by);
-    x.create_at = new Date(x.create_at).toLocaleString();
+    x.create_at = new Date(x.create_at - 24 * 60 * 60 * 1000).toLocaleString();
     x.username = u.username;
     x.sex = u.sex;
     const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
@@ -90,7 +90,7 @@ module.exports.getPostList = async (user_id, type) => {
     const result = await Promise.all(_.map(rl, async r => {
       const x = JSON.parse(JSON.stringify(r));
       const u = await User.findById(x.create_by);
-      x.create_at = new Date(x.create_at).toLocaleString();
+      x.create_at = new Date(x.create_at - 24 * 60 * 60 * 1000).toLocaleString();
       x.username = u.username;
       x.sex = u.sex;
       const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
@@ -116,7 +116,7 @@ module.exports.getPostList = async (user_id, type) => {
   const result = await Promise.all(_.map(rl, async r => {
     const x = JSON.parse(JSON.stringify(r));
     const u = await User.findById(x.create_by);
-    x.create_at = new Date(x.create_at).toLocaleString();
+    x.create_at = new Date(x.create_at - 24 * 60 * 60 * 1000).toLocaleString();
     x.username = u.username;
     x.sex = u.sex;
     const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
@@ -165,7 +165,7 @@ module.exports.sendOrReceiver = async (user_id, sendOrReceiver) => {
   const result = await Promise.all(_.map(rl, async r => {
     const x = JSON.parse(JSON.stringify(r));
     const u = await User.findById(x.create_by);
-    x.create_at = new Date(x.create_at).toLocaleString();
+    x.create_at = new Date(x.create_at - 24 * 60 * 60 * 1000).toLocaleString();
     x.username = u.username;
     x.sex = u.sex;
     const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
@@ -180,7 +180,7 @@ module.exports.sendOrReceiver = async (user_id, sendOrReceiver) => {
     // 约拍实体
     const has = _.find(pis, p => p._id === x.post_id);
     const user = await User.findById(has.create_by);
-    has.create_at = new Date(has.create_at).toLocaleString();
+    has.create_at = new Date(has.create_at - 24 * 60 * 60 * 1000).toLocaleString();
     has.username = user.username;
     has.sex = user.sex;
     const role2 = await Dict.findOne({dict_code: user.role_id, type: 2}, {name: 1});

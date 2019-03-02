@@ -14,7 +14,7 @@ module.exports.findAll = async (skip, take, login_id) => {
   const result = await Promise.all(_.map(rl, async r => {
     const x = JSON.parse(JSON.stringify(r));
     const u = await User.findById(x.create_by);
-    x.create_at = new Date(x.create_at).toLocaleString();
+    x.create_at = new Date(x.create_at - 24 * 60 * 60 * 1000).toLocaleString();
     x.username = u.username;
     x.sex = u.sex;
     const role = await Dict.findOne({dict_code: u.role_id, type: 2}, {name: 1});
